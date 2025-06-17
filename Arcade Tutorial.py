@@ -32,6 +32,8 @@ class GameView(arcade.Window):
 
     def setup(self):
         """Set up the game here. Call this function to restart the game."""
+        self.dead = 0
+
                 # Variable to hold our texture for our player
         self.player_texture = arcade.load_texture(
             "slpobat.png"
@@ -60,7 +62,7 @@ class GameView(arcade.Window):
         self.player_list.append(self.player_sprite)
         self.player_list.append(self.ball)
         self.score = 0
-        self.dead = False
+        self.dead = 0
 
         # Create a Simple Physics Engine, this will handle moving our
         # player as well as collisions between the player sprite and
@@ -79,6 +81,8 @@ class GameView(arcade.Window):
         if self.dead:
             arcade.draw_text("you lose", WINDOW_WIDTH/2, WINDOW_HEIGHT/2, arcade.color.WHITE, 80)    
             self.score = 0
+            self.dead += 1
+
 
 
         # Draw our sprites
@@ -87,7 +91,11 @@ class GameView(arcade.Window):
         arcade.draw_text(output, 1000, WINDOW_HEIGHT-30, arcade.color.WHITE, 24)
 
 
-
+    def _point_sprite(self, sprite, target):
+        # Calculate the angle between the two sprites
+        angle = math.degrees(math.atan2(target.center_y - sprite.center_y, target.center_x - sprite.center_x))
+        # Set the sprite's angle
+        sprite.angle = angle
 
 
     def on_update(self, delta_time):
@@ -104,14 +112,22 @@ class GameView(arcade.Window):
         hitshit = arcade.check_for_collision(self.player_sprite, self.ball)
         if hitshit:
             self.score +=1
-            self.ball.change_y = self.ball.change_y*-1
-            self.ball.forward(5)
+
+            self.ball.angle += randint(160, 200)
+            if self.ball.angle > 360:
+                self.ball.angle -=360
+
+            h = math.sqrt((self.ball.change_y*self.ball.change_y)+(self.ball.change_x*self.ball.change_x))
+
+            self.ball.change_y = math.sin(self.ball.angle)*h
+            self.ball.change_y = math.cos(self.ball.angle)*h
+            self.ball.forward(-5)
 
 
         # move terrence
         self.ball.center_x += self.ball.change_x
         self.ball.center_y += self.ball.change_y
-        self.ball.angle = (math.atan((self.ball.change_y/self.ball.change_x)))*180/3.14
+        self.ball.angle = math.degrees(math.atan((self.ball.change_y/self.ball.change_x)))
 
 
         # bounce terance
@@ -119,15 +135,13 @@ class GameView(arcade.Window):
             self.ball.change_x *= -1  # Reverse horizontal direction
         if self.ball.bottom < 0 or self.ball.top > WINDOW_HEIGHT:
             self.ball.change_y *= -1  # Reverse vertical direction
-
-        #  die
         
         #die
         if self.ball.bottom < 1:
-            self.dead = True
+            self.dead += 1
         
-
-            
+        if self.dead > 30:
+            self.setup()
 
 
 
@@ -135,7 +149,6 @@ class GameView(arcade.Window):
 
         self.player_sprite.center_x = x
         self.player_sprite.center_y = y
-
 
 
 def main():
